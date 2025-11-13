@@ -59,11 +59,11 @@ jobs:
       with:
         args: --severity-threshold=high --file=Purity.sln
         
+    - name: Setup Snyk CLI
+      uses: snyk/actions/setup@master
     - name: Run Snyk Code to check for code security issues
-      uses: snyk/actions/code@master
+      run: snyk code test --severity-threshold=high
       continue-on-error: true
       env:
         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-      with:
-        args: --severity-threshold=high
 

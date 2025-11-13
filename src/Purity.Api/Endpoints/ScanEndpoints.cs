@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Purity.Api.Contracts;
 using Purity.Engine.Application;
+using Sentry;
 using static LanguageExt.Prelude;
 
 namespace Purity.Api.Endpoints;
@@ -48,18 +49,29 @@ public static class ScanEndpoints
 
         return outcome.Match(
             Right: report => Results.Ok(ScanResponseDto.From(report)),
-            Left: failure =>
-            {
-                logger.LogError(failure.Exception, "Analyzer run failed with code {Code}: {Reason}", failure.Code, failure.Reason);
-                return Results.Problem(
-                    title: "Analyzer run failed",
-                    detail: failure.Reason,
-                    statusCode: StatusCodes.Status400BadRequest,
-                    extensions: new Dictionary<string, object?>
+                Left: failure =>
+                {
+                    logger.LogError(failure.Exception, "Analyzer run failed with code {Code}: {Reason}", failure.Code, failure.Reason);
+                    
+                    // Capture exception in Sentry if available
+                    if (failure.Exception is not null)
                     {
-                        ["code"] = failure.Code
-                    });
-            });
+                        SentrySdk.CaptureException(failure.Exception, scope =>
+                        {
+                            scope.SetTag("failure_code", failure.Code);
+                            scope.SetExtra("failure_reason", failure.Reason);
+                        });
+                    }
+                    
+                    return Results.Problem(
+                        title: "Analyzer run failed",
+                        detail: failure.Reason,
+                        statusCode: StatusCodes.Status400BadRequest,
+                        extensions: new Dictionary<string, object?>
+                        {
+                            ["code"] = failure.Code
+                        });
+                });
     }
 }
 

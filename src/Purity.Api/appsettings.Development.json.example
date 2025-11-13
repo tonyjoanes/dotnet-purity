@@ -1,0 +1,19 @@
+{
+  "Sentry": {
+    "Dsn": "YOUR_SENTRY_DSN_HERE",
+    "Enabled": true
+  },
+  "Cors": {
+    "AllowedOrigins": [
+      "http://localhost:5066",
+      "https://localhost:5066"
+    ]
+  },
+  "Authentication": {
+    "GitHub": {
+      "Authority": "YOUR_GITHUB_OAUTH_AUTHORITY",
+      "Audience": "YOUR_GITHUB_OAUTH_AUDIENCE"
+    }
+  }
+}
+

@@ -3,13 +3,13 @@
     "BaseAddress": "http://localhost:5251"
   },
   "Sentry": {
-    "Dsn": "",
-    "Enabled": false
+    "Dsn": "YOUR_SENTRY_DSN_HERE",
+    "Enabled": true
   },
   "Authentication": {
     "GitHub": {
       "Authority": "https://github.com/login/oauth/authorize",
-      "ClientId": "",
+      "ClientId": "YOUR_GITHUB_CLIENT_ID",
       "ResponseType": "code",
       "Scopes": [
         "read:user"

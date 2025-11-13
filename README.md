@@ -42,7 +42,30 @@
 - Scaffold login UI and wire authentication state to API calls.
 - In `Purity.Api`, set up Minimal API boilerplate with secure endpoints (`/scan`, `/results`), CORS, and token validation.
 
-#### 6. Set Up Analyzer Engine & Rules
+#### 6. Configure Secrets and Environment-Specific Settings
+
+**Important**: Never commit DSNs, API keys, or other secrets to source control.
+
+1. **For Local Development**: Copy the example configuration files and add your secrets:
+   ```bash
+   # API
+   cp src/Purity.Api/appsettings.Development.json.example src/Purity.Api/appsettings.Development.json
+   # Edit appsettings.Development.json with your Sentry DSN and other secrets
+   
+   # Frontend
+   cp src/Purity.Frontend/wwwroot/appsettings.Development.json.example src/Purity.Frontend/wwwroot/appsettings.Development.json
+   # Edit appsettings.Development.json with your Sentry DSN and GitHub OAuth Client ID
+   ```
+
+2. These `appsettings.Development.json` files are gitignored and won't be committed.
+
+3. **Alternative Options**:
+   - Use environment variables (recommended for production)
+   - Use ASP.NET Core User Secrets: `dotnet user-secrets set "Sentry:Dsn" "your-dsn" --project src/Purity.Api`
+
+4. See `docs/sentry-setup.md` for detailed Sentry configuration instructions.
+
+#### 7. Set Up Analyzer Engine & Rules
 
 - In `Purity.Engine`, reference Roslyn packages:
   ```

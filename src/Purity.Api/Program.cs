@@ -2,10 +2,24 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Purity.Api.Endpoints;
 using Purity.Api.Infrastructure;
 using Purity.Engine.Application;
+using Sentry;
 
 const string CorsPolicyName = "purity-frontend";
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure Sentry (only if DSN is provided)
+var sentryDsn = builder.Configuration["Sentry:Dsn"];
+if (!string.IsNullOrWhiteSpace(sentryDsn))
+{
+    builder.WebHost.UseSentry(options =>
+    {
+        options.Dsn = sentryDsn;
+        options.Environment = builder.Environment.EnvironmentName;
+        options.TracesSampleRate = builder.Environment.IsDevelopment() ? 1.0 : 0.1;
+        options.Debug = builder.Environment.IsDevelopment();
+    });
+}
 
 builder.Services.AddCors(options =>
 {
@@ -72,6 +86,12 @@ builder.Services.AddSingleton<IAnalyzerCatalog, DefaultAnalyzerCatalog>();
 builder.Services.AddSingleton<IAnalyzerRunner, AnalyzerRunner>();
 
 var app = builder.Build();
+
+// Sentry must be configured before other middleware (only if enabled)
+if (!string.IsNullOrWhiteSpace(sentryDsn))
+{
+    app.UseSentryTracing();
+}
 
 app.UseCors(CorsPolicyName);
 app.UseAuthentication();

@@ -2,6 +2,7 @@
 @inject HttpClient Http
 @inject ILogger<Home> Logger
 @using System.ComponentModel.DataAnnotations
+@using Sentry
 
 <PageTitle>Purity Dashboard</PageTitle>
 
@@ -20,9 +21,14 @@
         </div>
     </div>
 
-    <button class="btn btn-primary" type="button" @onclick="RunScanAsync" disabled="@IsButtonDisabled">
-        @_buttonLabel
-    </button>
+    <div class="d-flex gap-2">
+        <button class="btn btn-primary" type="button" @onclick="RunScanAsync" disabled="@IsButtonDisabled">
+            @_buttonLabel
+        </button>
+        <button class="btn btn-outline-danger btn-sm" type="button" @onclick="TestSentryError" title="Test Sentry error tracking">
+            🧪 Test Sentry
+        </button>
+    </div>
 
     @if (_isRunning)
     {
@@ -90,6 +96,26 @@
     
     private bool IsButtonDisabled => _isRunning || string.IsNullOrWhiteSpace(_request.RepositoryPath);
 
+    private void TestSentryError()
+    {
+        try
+        {
+            // This will throw an exception that Sentry should capture
+            throw new InvalidOperationException("This is a test exception to verify Sentry integration is working correctly.");
+        }
+        catch (Exception ex)
+        {
+            // Manually capture to ensure it's sent to Sentry
+            SentrySdk.CaptureException(ex, scope =>
+            {
+                scope.SetTag("test", "true");
+                scope.SetTag("source", "manual_test");
+            });
+            
+            _error = $"Test exception captured! Check Sentry dashboard. Error: {ex.Message}";
+        }
+    }
+
     private async Task RunScanAsync()
     {
         if (string.IsNullOrWhiteSpace(_request.RepositoryPath))
@@ -120,6 +146,13 @@
         {
             Logger.LogError(ex, "Failed to run purity analyzers");
             _error = ex.Message;
+            
+            // Capture exception in Sentry if available
+            SentrySdk.CaptureException(ex, scope =>
+            {
+                scope.SetTag("operation", "run_scan");
+                scope.SetExtra("repository_path", _request.RepositoryPath);
+            });
         }
         finally
         {

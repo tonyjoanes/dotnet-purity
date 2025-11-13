@@ -1,0 +1,32 @@
+version: 2
+updates:
+  # Enable version updates for .NET
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "dotnet"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    # Group updates for better PR management
+    groups:
+      microsoft-aspnetcore:
+        patterns:
+          - "Microsoft.AspNetCore.*"
+          - "Microsoft.AspNetCore.Components.*"
+      microsoft-codeanalysis:
+        patterns:
+          - "Microsoft.CodeAnalysis.*"
+      sentry:
+        patterns:
+          - "Sentry.*"
+      language-ext:
+        patterns:
+          - "LanguageExt.*"
+

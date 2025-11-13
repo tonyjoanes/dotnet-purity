@@ -40,12 +40,37 @@ To enable Snyk security scanning in CI:
 
 ## Dependabot
 
-Dependabot is configured in `.github/dependabot.yml` to automatically:
+Dependabot is configured in two ways:
 
+### Option 1: Native GitHub Dependabot (Recommended)
+
+Configured in `.github/dependabot.yml` - this runs automatically and doesn't require any secrets or workflows. It will:
 - Check for dependency updates weekly (Mondays at 9:00 AM)
 - Create pull requests for available updates
 - Group related dependencies (Microsoft.AspNetCore.*, Microsoft.CodeAnalysis.*, etc.)
 - Limit to 10 open pull requests at a time
+
+### Option 2: Dependabot Action (Workflow-based)
+
+Configured in `.github/workflows/dependabot.yml` - this uses a GitHub Action and requires a token.
+
+**GITHUB_TOKEN Setup:**
+- `GITHUB_TOKEN` is **automatically provided** by GitHub Actions - you don't need to create it!
+- It's available in all workflows by default with permissions to read/write to the repository
+- The workflow already uses `${{ secrets.GITHUB_TOKEN }}` which is automatically available
+
+**If you need a Personal Access Token (PAT) instead:**
+1. Go to GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)
+2. Click "Generate new token (classic)"
+3. Give it a name (e.g., "Dependabot Action")
+4. Select scopes: `repo` (full control of private repositories)
+5. Click "Generate token" and copy it
+6. Go to your repository → Settings → Secrets and variables → Actions
+7. Create a new secret named `DEPENDABOT_TOKEN` (or any name you prefer)
+8. Paste the token and save
+9. Update the workflow to use `${{ secrets.DEPENDABOT_TOKEN }}` instead of `${{ secrets.GITHUB_TOKEN }}`
+
+**Note:** For most use cases, the automatic `GITHUB_TOKEN` works perfectly and no setup is needed!
 
 ### Dependabot Groups
 
@@ -54,7 +79,6 @@ Dependencies are automatically grouped into:
 - **microsoft-codeanalysis**: All Microsoft.CodeAnalysis.* packages
 - **sentry**: All Sentry.* packages
 - **language-ext**: All LanguageExt.* packages
-- **other**: Minor and patch updates for other packages
 
 This reduces PR noise by grouping related updates together.
 

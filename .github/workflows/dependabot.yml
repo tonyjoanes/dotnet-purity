@@ -1,0 +1,31 @@
+name: Dependabot Updates
+
+on:
+  schedule:
+    # Run weekly on Mondays at 9:00 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch: # Allow manual triggering
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  dependabot:
+    name: Dependabot
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Dependabot version updates
+      uses: dependabot/dependabot-action@main
+      with:
+        package-ecosystem: "nuget"
+        directory: "/"
+        open-pull-requests-limit: 10
+        versioning-strategy: increase
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

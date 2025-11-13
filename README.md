@@ -1,112 +1,99 @@
-### Purity Project: Complete Initial Setup—Functional, Modular, Best Practices
+# Purity
 
-#### 1. Clone Your Purity Repository
+[![CI](https://github.com/tonyjoanes/dotnet-purity/actions/workflows/ci.yml/badge.svg)](https://github.com/tonyjoanes/dotnet-purity/actions/workflows/ci.yml)
+[![Known Vulnerabilities](https://snyk.io/test/github/tonyjoanes/dotnet-purity/badge.svg)](https://snyk.io/test/github/tonyjoanes/dotnet-purity)
 
-- Open Cursor IDE and either use the Git panel or terminal to clone your repo:
-  ```
-  git clone <your-purity-repo-url>
-  cd purity
-  ```
+**Purity** is a code analysis tool that scans C# repositories to detect code quality issues and enforce functional programming best practices. Built with .NET 8, it uses Roslyn analyzers to identify common anti-patterns that can lead to performance issues, deadlocks, and maintainability problems.
 
-#### 2. Initialize Solution and Modular Projects
+## Features
 
-- In Cursor IDE, create your solution and the following projects to maximize modularity:
-  - `Purity.Frontend`: Blazor WebAssembly—UI, OAuth, dashboard
-  - `Purity.Api`: .NET 8 Minimal API—API surface, orchestrator
-  - `Purity.Engine`: Core analyzer logic, Roslyn integration
-  - `Purity.Analyzers`: Roslyn rules as standalone libraries
-- Organize code in clear boundaries: `Domain`, `Application`, `Infrastructure`, `Presentation`
+- 🔍 **Static Code Analysis**: Scans entire C# repositories using Roslyn analyzers
+- 🎯 **Functional Programming Rules**: Enforces functional programming best practices
+- 🌐 **Web-Based Interface**: Blazor WebAssembly frontend for easy interaction
+- 🔐 **GitHub OAuth**: Secure authentication via GitHub
+- 📊 **Detailed Diagnostics**: Provides precise location and severity information for each issue
 
-#### 3. Enforce Functional C# Practices
+## Analyzer Rules
 
-- Add the `language-ext` package to core projects:
-  ```
-  dotnet add package language-ext.Core
-  ```
-- Use `Option<T>`, `Either<L,R>`, and other functional types for data flow and error handling.
-- Prefer immutable types (records, readonly structs), pure functions, and ban nulls in business logic.
-- Separate side-effects from logic; use dependency injection for I/O/services.
+Purity includes three built-in analyzers:
 
-#### 4. Enforce Coding Standards and Guidelines
+- **PURITY001** - **Await Inside Loop**: Detects await expressions inside loop constructs that can serialize asynchronous work
+- **PURITY002** - **Sync Over Async**: Flags synchronous waits on asynchronous operations (e.g., `.Result`, `.Wait()`, `GetAwaiter().GetResult()`)
+- **PURITY003** - **Static Collection Leak**: Detects static mutable collection fields that leak shared state
 
-- Add an `.editorconfig` and agree on formatting tools.
-- Reference a C# best-practices guide (e.g., Microsoft, Clean Code C#) in your repo’s `/docs` folder.
-- Adopt naming conventions and consistent use of access modifiers, immutability, and async patterns.
+## Architecture
 
-#### 5. Scaffold Authentication and Core Architecture
+Purity is built with a modular, functional architecture:
 
-- In `Purity.Frontend`, implement GitHub OAuth using:
-  ```
-  dotnet add package Microsoft.AspNetCore.Components.WebAssembly.Authentication
-  ```
-- Scaffold login UI and wire authentication state to API calls.
-- In `Purity.Api`, set up Minimal API boilerplate with secure endpoints (`/scan`, `/results`), CORS, and token validation.
+- **Purity.Frontend**: Blazor WebAssembly application providing the user interface
+- **Purity.Api**: .NET 8 Minimal API serving as the backend orchestrator
+- **Purity.Engine**: Core analyzer logic with Roslyn integration
+- **Purity.Analyzers**: Roslyn analyzer rules as standalone, extractable libraries
 
-#### 6. Configure Secrets and Environment-Specific Settings
+The codebase follows functional programming principles using `language-ext` for:
+- `Option<T>` for nullable values
+- `Either<L, R>` for error handling
+- Immutable types and pure functions
+- Separation of side-effects from business logic
 
-**Important**: Never commit DSNs, API keys, or other secrets to source control.
+## Quick Start
 
-1. **For Local Development**: Copy the example configuration files and add your secrets:
-   ```bash
-   # API
-   cp src/Purity.Api/appsettings.Development.json.example src/Purity.Api/appsettings.Development.json
-   # Edit appsettings.Development.json with your Sentry DSN and other secrets
-   
-   # Frontend
-   cp src/Purity.Frontend/wwwroot/appsettings.Development.json.example src/Purity.Frontend/wwwroot/appsettings.Development.json
-   # Edit appsettings.Development.json with your Sentry DSN and GitHub OAuth Client ID
-   ```
+```bash
+# Clone the repository
+git clone https://github.com/tonyjoanes/dotnet-purity.git
+cd dotnet-purity
 
-2. These `appsettings.Development.json` files are gitignored and won't be committed.
+# Restore dependencies
+dotnet restore Purity.sln
 
-3. **Alternative Options**:
-   - Use environment variables (recommended for production)
-   - Use ASP.NET Core User Secrets: `dotnet user-secrets set "Sentry:Dsn" "your-dsn" --project src/Purity.Api`
+# Build the solution
+dotnet build Purity.sln --configuration Release
 
-4. See `docs/sentry-setup.md` for detailed Sentry configuration instructions.
+# Run the API
+cd src/Purity.Api
+dotnet run
 
-#### 7. Set Up Analyzer Engine & Rules
+# Run the Frontend (in a separate terminal)
+cd src/Purity.Frontend
+dotnet run
+```
 
-- In `Purity.Engine`, reference Roslyn packages:
-  ```
-  dotnet add package Microsoft.CodeAnalysis.CSharp
-  ```
-- Scaffold analyzer runner against a local repo clone; inject analyzers via interfaces.
-- In `Purity.Analyzers`, create functional analyzers as `static` rule classes:
-  - `PURITY001`: Query await inside loop
-  - `PURITY002`: Sync-over-async usage
-  - `PURITY003`: Static collection leak
-- Ensure all analyzers are independent modules for easy future extraction.
+For detailed setup instructions, see the [Setup Guide](docs/setup-guide.md).
 
-#### 7. Connect Components and Demonstrate End-to-End Flow
+## Documentation
 
-- Make authenticated HTTP calls from Blazor frontend to Minimal API backend.
-- Pass OAuth token securely.
-- Return analyzer results (using functional wrappers, e.g., `Option`, `Either`) and wire up UI display.
+- [Setup Guide](docs/setup-guide.md) - Complete installation and configuration instructions
+- [Architecture and Deployment](docs/architecture-and-deployment.md) - System architecture and deployment details
+- [CI/CD Setup](docs/ci-setup.md) - GitHub Actions, Snyk, and Dependabot configuration
+- [Style Guide](docs/style-guide.md) - Coding standards and functional programming practices
+- [GitHub OAuth Setup](docs/github-oauth-setup.md) - Authentication configuration
+- [Sentry Setup](docs/sentry-setup.md) - Error tracking and monitoring setup
 
-#### 8. Local Testing and First Commit
+## Requirements
 
-- In Cursor IDE, set up profiles to launch both frontend and backend together.
-- Test logging in with GitHub, running a dummy scan, and returning results.
-- Commit your setup:
-  ```
-  git add .
-  git commit -m "Initial functional setup: modular solution, OAuth, API, analyzer skeletons, coding guidelines"
-  git push
-  ```
+- .NET 8.0 SDK or later
+- Git
+- GitHub account (for OAuth authentication)
+- Snyk account (optional, for security scanning in CI)
 
-#### 9. Best-Practice Modularization Tips
+## Contributing
 
-- Keep core analyzers, scoring, and PR logic in libraries, not `Api` or `Frontend`—ensuring later ease-of-extraction.[1]
-- Separate integrations (Roslyn, GitHub, benchmarks) behind interfaces.
-- Document every architectural decision (as ADRs or in `/docs/design`).
-- Regularly review with functional and modular guidelines in mind.
+Purity follows functional programming principles and modular architecture. When contributing:
 
-#### 10. Documentation and Communication
+- Follow the [Style Guide](docs/style-guide.md)
+- Use functional types from `language-ext` (`Option<T>`, `Either<L, R>`)
+- Keep analyzers as independent, extractable modules
+- Document architectural decisions
+- Write tests for analyzer rules
 
-- Add README notes outlining your commitment to:
-  - Functional programming standards
-  - Modular, extractable architecture
-  - Usage of `language-ext`
-  - Coding style guides and review principles
-- Encourage feedback and flag deviations in pull requests.
+## License
+
+[Add your license here]
+
+## Acknowledgments
+
+Built with:
+- [.NET 8](https://dotnet.microsoft.com/)
+- [Roslyn](https://github.com/dotnet/roslyn) - .NET Compiler Platform
+- [language-ext](https://github.com/louthy/language-ext) - Functional programming library for C#
+- [Blazor](https://dotnet.microsoft.com/apps/aspnet/web-apps/blazor) - Web UI framework

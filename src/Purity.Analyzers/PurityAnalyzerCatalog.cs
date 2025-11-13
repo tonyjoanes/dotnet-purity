@@ -10,7 +10,15 @@ public static class PurityAnalyzerCatalog
         ImmutableArray.Create<DiagnosticAnalyzer>(
             new AwaitInsideLoopAnalyzer(),
             new SyncOverAsyncAnalyzer(),
-            new StaticCollectionLeakAnalyzer());
+            new StaticCollectionLeakAnalyzer(),
+            new DisposableNotDisposedAnalyzer(),
+            new EventHandlerLeakAnalyzer(),
+            new MultipleEnumerationAnalyzer(),
+            new NullReferenceDereferenceAnalyzer(),
+            new SwallowedExceptionAnalyzer(),
+            new StringConcatenationInLoopAnalyzer(),
+            new InsecureAlgorithmAnalyzer(),
+            new ThreadSafetyViolationAnalyzer());
 }
 
 

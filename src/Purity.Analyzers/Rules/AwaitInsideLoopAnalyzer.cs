@@ -11,17 +11,18 @@ namespace Purity.Analyzers.Rules;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class AwaitInsideLoopAnalyzer : DiagnosticAnalyzer
 {
-    private static readonly DiagnosticDescriptor Rule =
-        new(
-            id: DiagnosticIds.AwaitInsideLoop,
-            title: "Avoid awaiting inside loops",
-            messageFormat: "Awaiting inside loops can serialize asynchronous work. Collect tasks and await once outside the loop.",
-            category: DiagnosticCategories.Purity,
-            defaultSeverity: DiagnosticSeverity.Warning,
-            isEnabledByDefault: true,
-            description: "Await expressions inside loops introduce hidden sequential execution. Aggregate tasks inside the loop and await them together to preserve concurrency.");
+    private static readonly DiagnosticDescriptor Rule = new(
+        id: DiagnosticIds.AwaitInsideLoop,
+        title: "Avoid awaiting inside loops",
+        messageFormat: "Awaiting inside loops can serialize asynchronous work. Collect tasks and await once outside the loop.",
+        category: DiagnosticCategories.Purity,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: "Await expressions inside loops introduce hidden sequential execution. Aggregate tasks inside the loop and await them together to preserve concurrency."
+    );
 
-    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
+    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
+        ImmutableArray.Create(Rule);
 
     public override void Initialize(AnalysisContext context)
     {
@@ -36,11 +37,12 @@ public sealed class AwaitInsideLoopAnalyzer : DiagnosticAnalyzer
         var loopAncestor = awaitExpression
             .Ancestors()
             .FirstOrDefault(node =>
-                node.IsKind(SyntaxKind.ForStatement) ||
-                node.IsKind(SyntaxKind.ForEachStatement) ||
-                node.IsKind(SyntaxKind.ForEachVariableStatement) ||
-                node.IsKind(SyntaxKind.WhileStatement) ||
-                node.IsKind(SyntaxKind.DoStatement));
+                node.IsKind(SyntaxKind.ForStatement)
+                || node.IsKind(SyntaxKind.ForEachStatement)
+                || node.IsKind(SyntaxKind.ForEachVariableStatement)
+                || node.IsKind(SyntaxKind.WhileStatement)
+                || node.IsKind(SyntaxKind.DoStatement)
+            );
 
         if (loopAncestor is null)
         {
@@ -51,5 +53,3 @@ public sealed class AwaitInsideLoopAnalyzer : DiagnosticAnalyzer
         context.ReportDiagnostic(diagnostic);
     }
 }
-
-

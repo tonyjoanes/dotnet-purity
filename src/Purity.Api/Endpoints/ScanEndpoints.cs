@@ -15,14 +15,14 @@ public static class ScanEndpoints
     {
         // TODO: Re-enable authentication once GitHub token validation is implemented
         // .RequireAuthorization() temporarily disabled for development (Option A)
-        var group = app.MapGroup("/scan")
-            .WithTags("Scan");
+        var group = app.MapGroup("/scan").WithTags("Scan");
 
-        group.MapPost("/", HandleScanAsync)
-             .WithName("RunScan")
-             .WithSummary("Executes Purity analyzers against the provided repository path.")
-             .Produces<ScanResponseDto>(StatusCodes.Status200OK)
-             .ProducesProblem(StatusCodes.Status400BadRequest);
+        group
+            .MapPost("/", HandleScanAsync)
+            .WithName("RunScan")
+            .WithSummary("Executes Purity analyzers against the provided repository path.")
+            .Produces<ScanResponseDto>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest);
 
         return group;
     }
@@ -31,7 +31,8 @@ public static class ScanEndpoints
         [FromBody] ScanRequestDto request,
         IAnalyzerRunner runner,
         ILoggerFactory loggerFactory,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var logger = loggerFactory.CreateLogger("Purity.Scan");
 
@@ -39,40 +40,57 @@ public static class ScanEndpoints
         {
             const string reason = "Repository path must be provided.";
             logger.LogWarning("Scan request rejected: {Reason}", reason);
-            return Results.ValidationProblem(new Dictionary<string, string[]>
-            {
-                ["repositoryPath"] = new[] { reason }
-            });
+            return Results.ValidationProblem(
+                new Dictionary<string, string[]> { ["repositoryPath"] = new[] { reason } }
+            );
         }
 
         var outcome = await runner.RunAsync(request.ToDomain(), cancellationToken);
 
         return outcome.Match(
             Right: report => Results.Ok(ScanResponseDto.From(report)),
-                Left: failure =>
+            Left: failure =>
+            {
+                // Only log as error if there's an actual exception (unexpected failure)
+                // Expected failures (like repository not found) are logged as warnings
+                if (failure.Exception is not null)
                 {
-                    logger.LogError(failure.Exception, "Analyzer run failed with code {Code}: {Reason}", failure.Code, failure.Reason);
-                    
-                    // Capture exception in Sentry if available
-                    if (failure.Exception is not null)
+                    logger.LogError(
+                        failure.Exception,
+                        "Analyzer run failed with code {Code}: {Reason}",
+                        failure.Code,
+                        failure.Reason
+                    );
+
+                    // Only send unexpected exceptions to Sentry (not expected failures like "repository not found")
+                    if (failure.Code == "ENGINE-UNEXPECTED")
                     {
-                        SentrySdk.CaptureException(failure.Exception, scope =>
-                        {
-                            scope.SetTag("failure_code", failure.Code);
-                            scope.SetExtra("failure_reason", failure.Reason);
-                        });
+                        SentrySdk.CaptureException(
+                            failure.Exception,
+                            scope =>
+                            {
+                                scope.SetTag("failure_code", failure.Code);
+                                scope.SetExtra("failure_reason", failure.Reason);
+                            }
+                        );
                     }
-                    
-                    return Results.Problem(
-                        title: "Analyzer run failed",
-                        detail: failure.Reason,
-                        statusCode: StatusCodes.Status400BadRequest,
-                        extensions: new Dictionary<string, object?>
-                        {
-                            ["code"] = failure.Code
-                        });
-                });
+                }
+                else
+                {
+                    logger.LogWarning(
+                        "Analyzer run failed with code {Code}: {Reason}",
+                        failure.Code,
+                        failure.Reason
+                    );
+                }
+
+                return Results.Problem(
+                    title: "Analyzer run failed",
+                    detail: failure.Reason,
+                    statusCode: StatusCodes.Status400BadRequest,
+                    extensions: new Dictionary<string, object?> { ["code"] = failure.Code }
+                );
+            }
+        );
     }
 }
-
-

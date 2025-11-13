@@ -62,6 +62,8 @@ public sealed class AnalyzerRunner : IAnalyzerRunner
                 var issues = diagnostics
                     .Where(diagnostic => diagnostic.Location.IsInSource)
                     .Select(ToAnalyzerDiagnostic)
+                    .Where(diagnostic => diagnostic != null)
+                    .Cast<AnalyzerDiagnostic>()
                     .ToImmutableArray();
 
                 return Right<AnalyzerFailure, AnalyzerReport>(new AnalyzerReport(issues));
@@ -111,22 +113,44 @@ public sealed class AnalyzerRunner : IAnalyzerRunner
         return builder.ToImmutable();
     }
 
-    private static AnalyzerDiagnostic ToAnalyzerDiagnostic(Diagnostic diagnostic)
+    private static AnalyzerDiagnostic? ToAnalyzerDiagnostic(Diagnostic diagnostic)
     {
-        var mappedSpan = diagnostic.Location.GetMappedLineSpan();
-        var span = new LocationSpan(
-            mappedSpan.StartLinePosition.Line + 1,
-            mappedSpan.StartLinePosition.Character + 1,
-            mappedSpan.EndLinePosition.Line + 1,
-            mappedSpan.EndLinePosition.Character + 1);
+        try
+        {
+            if (!diagnostic.Location.IsInSource)
+            {
+                return null;
+            }
 
-        return new AnalyzerDiagnostic(
-            diagnostic.Id,
-            diagnostic.Descriptor.Title.ToString(),
-            diagnostic.GetMessage(),
-            diagnostic.Severity,
-            mappedSpan.Path,
-            span);
+            var mappedSpan = diagnostic.Location.GetMappedLineSpan();
+            if (mappedSpan.Path == null)
+            {
+                return null;
+            }
+
+            var span = new LocationSpan(
+                mappedSpan.StartLinePosition.Line + 1,
+                mappedSpan.StartLinePosition.Character + 1,
+                mappedSpan.EndLinePosition.Line + 1,
+                mappedSpan.EndLinePosition.Character + 1);
+
+            var title = diagnostic.Descriptor?.Title?.ToString() ?? diagnostic.Id;
+            var message = diagnostic.GetMessage() ?? string.Empty;
+
+            return new AnalyzerDiagnostic(
+                diagnostic.Id,
+                title,
+                message,
+                diagnostic.Severity,
+                mappedSpan.Path,
+                span);
+        }
+        catch
+        {
+            // If we can't convert a diagnostic, skip it rather than failing the entire scan
+            // This can happen with malformed diagnostics or edge cases in Roslyn
+            return null;
+        }
     }
 }
 

@@ -51,11 +51,19 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore Purity.sln
       
-    - name: Run Snyk to check for vulnerabilities
+    - name: Run Snyk to check for dependency vulnerabilities
       uses: snyk/actions/dotnet@master
       continue-on-error: true
       env:
         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       with:
         args: --severity-threshold=high --file=Purity.sln
+        
+    - name: Run Snyk Code to check for code security issues
+      uses: snyk/actions/code@master
+      continue-on-error: true
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        args: --severity-threshold=high
 

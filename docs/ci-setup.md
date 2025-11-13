@@ -12,9 +12,20 @@ The CI pipeline is defined in `.github/workflows/ci.yml` and includes:
 - Runs tests (if any test projects exist)
 
 ### Snyk Security Scan Job
-- Scans all .NET dependencies for known vulnerabilities
-- Runs on pull requests and pushes to main/develop branches
-- Fails the build if high-severity vulnerabilities are found
+The Snyk security scan includes two types of analysis:
+
+1. **Dependency Vulnerability Scanning** (Snyk Open Source):
+   - Scans all .NET dependencies for known CVEs and security vulnerabilities
+   - Checks NuGet packages against Snyk's vulnerability database
+   - Identifies outdated packages with security issues
+
+2. **Code Security Scanning** (Snyk Code):
+   - Static Application Security Testing (SAST) that analyzes source code
+   - Detects security vulnerabilities in your code (SQL injection, XSS, etc.)
+   - Identifies insecure coding patterns and best practice violations
+   - Complements Purity analyzers (Purity focuses on code quality, Snyk Code focuses on security)
+
+Both scans run on pull requests and pushes to main/develop branches and fail the build if high-severity issues are found.
 
 ## Setting Up Snyk
 
